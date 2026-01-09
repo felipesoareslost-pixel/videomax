@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoMax - Baixar Vídeos do YouTube com IA</title>
+    <meta name="description" content="Baixe vídeos do YouTube em alta qualidade com tecnologia de IA avançada. Suporte para MP4, MP3, 4K e muito mais!">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+    function irParaInicio() {
+        // Fecha o resultado do vídeo se estiver aberto
+        var resultado = document.getElementById('videoResult');
+        if (resultado) resultado.style.display = 'none';
+        
+        // Limpa o campo de URL
+        var input = document.getElementById('videoUrl');
+        if (input) input.value = '';
+        
+        // Volta para o topo absoluto da página
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+        window.scrollTo(0, 0);
+    }
+    function irParaSecao(id) {
+        var el = document.getElementById(id);
+        if (el) el.scrollIntoView();
+    }
+    </script>
+</head>
+<body>
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="container">
+                <div class="logo" onclick="location.href='/';" style="cursor: pointer;">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Video<strong>Max</strong></span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="nav-link">Início</a></li>
+                    <li><a href="#features" class="nav-link" onclick="irParaSecao('features');return false;">Recursos</a></li>
+                    <li><a href="#formats" class="nav-link" onclick="irParaSecao('formats');return false;">Formatos</a></li>
+                    <li><a href="#faq" class="nav-link" onclick="irParaSecao('faq');return false;">FAQ</a></li>
+                </ul>
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <!-- Speed Notification Banner -->
+            <div class="speed-notification">
+                <i class="fas fa-rocket"></i>
+                <span><strong>🚀 MODO TURBO PRO!</strong> 16 fragmentos paralelos • Chunks de 10MB • yt-dlp atualizado • Downloads ultra-rápidos!</span>
+            </div>
+            
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-robot"></i>
+                    <span>Powered by Advanced AI</span>
+                </div>
+                <h1 class="hero-title">
+                    Baixe Vídeos do YouTube
+                    <span class="gradient-text">Com Inteligência Artificial</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Tecnologia de IA avançada para downloads ultra-rápidos em qualquer qualidade. 
+                    Suporte para 4K, 8K, MP3 e mais de 1000 sites!
+                </p>
+                
+                <!-- Download Form -->
+                <div class="download-form">
+                    <div class="form-wrapper">
+                        <div class="input-group">
+                            <i class="fas fa-link input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="videoUrl" 
+                                placeholder="Cole o link do vídeo aqui (YouTube, Instagram, TikTok...)"
+                                autocomplete="off"
+                            >
+                            <button class="clear-btn" id="clearBtn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <button class="download-btn" id="downloadBtn">
+                            <span class="btn-text">Baixar Agora</span>
+                            <i class="fas fa-download btn-icon"></i>
+                            <div class="btn-loader"></div>
+                        </button>
+                    </div>
+                    <div class="ai-status">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Protegido por IA • 100% Seguro • Sem Registro</span>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="quick-btn" data-platform="youtube">
+                        <i class="fab fa-youtube"></i>
+                        <span>YouTube</span>
+                    </button>
+                    <button class="quick-btn" data-platform="instagram">
+                        <i class="fab fa-instagram"></i>
+                        <span>Instagram</span>
+                    </button>
+                    <button class="quick-btn" data-platform="tiktok">
+                        <i class="fab fa-tiktok"></i>
+                        <span>TikTok</span>
+                    </button>
+                    <button class="quick-btn" data-platform="facebook">
+                        <i class="fab fa-facebook"></i>
+                        <span>Facebook</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Result Section -->
+    <section class="video-result" id="videoResult" style="display: none;">
+        <div class="container">
+            <div class="result-card">
+                <button class="close-result" id="closeResult">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <div class="video-info">
+                    <div class="video-thumbnail">
+                        <img id="videoThumbnail" src="" alt="Video Thumbnail">
+                        <div class="play-overlay">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                    <div class="video-details">
+                        <h3 id="videoTitle"></h3>
+                        <div class="video-meta">
+                            <span id="videoDuration"><i class="fas fa-clock"></i> --:--</span>
+                            <span id="videoViews"><i class="fas fa-eye"></i> -- views</span>
+                            <span id="videoChannel"><i class="fas fa-user"></i> --</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-analysis">
+                    <div class="ai-badge">
+                        <i class="fas fa-brain"></i>
+                        <span>Análise IA Completa</span>
+                    </div>
+                    <div class="analysis-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span class="progress-text">Analisando vídeo com IA...</span>
+                    </div>
+                </div>
+
+                <div class="download-options">
+                    <h4><i class="fas fa-download"></i> Opções de Download</h4>
+                    
+                    <div class="format-tabs">
+                        <button class="format-tab active" data-format="video">
+                            <i class="fas fa-video"></i>
+                            Vídeo
+                        </button>
+                        <button class="format-tab" data-format="audio">
+                            <i class="fas fa-music"></i>
+                            Áudio
+                        </button>
+                    </div>
+
+                    <div class="quality-options" id="videoOptions">
+                        <!-- Video options will be inserted here -->
+                    </div>
+                    
+                    <div class="quality-options" id="audioOptions" style="display: none;">
+                        <!-- Audio options will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Recursos Avançados com <span class="gradient-text">IA</span></h2>
+                <p>Tecnologia de ponta para a melhor experiência de download</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>IA Avançada</h3>
+                    <p>Algoritmos de machine learning para detecção automática da melhor qualidade</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Ultra Rápido</h3>
+                    <p>Downloads em alta velocidade com otimização de banda inteligente</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <h3>Até 8K</h3>
+                    <p>Suporte para todas as resoluções: 144p, 360p, 720p, 1080p, 4K, 8K</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3>1000+ Sites</h3>
+                    <p>YouTube, Instagram, TikTok, Facebook, Twitter e muito mais</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>100% Seguro</h3>
+                    <p>Sem malware, sem vírus. Proteção garantida por IA</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Multi-Plataforma</h3>
+                    <p>Funciona em Windows, Mac, Linux, Android e iOS</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formats Section -->
+    <section class="formats" id="formats">
+        <div class="container">
+            <div class="section-header">
+                <h2>Formatos <span class="gradient-text">Suportados</span></h2>
+                <p>Baixe em qualquer formato que você precisar</p>
+            </div>
+            
+            <div class="formats-grid">
+                <div class="format-item">
+                    <i class="fas fa-file-video"></i>
+                    <span>MP4</span>
+                </div>
+                <div class="format-item">
+                    <i class="fas fa-file-audio"></i>
+                    <span>MP3</span>
+                </div>
+                <div class="format-item">
+                    <i class="fas fa-file-video"></i>
+                    <span>WEBM</span>
+                </div>
+                <div class="format-item">
+                    <i class="fas fa-file-audio"></i>
+                    <span>M4A</span>
+                </div>
+                <div class="format-item">
+                    <i class="fas fa-file-video"></i>
+                    <span>AVI</span>
+                </div>
+                <div class="format-item">
+                    <i class="fas fa-file-audio"></i>
+                    <span>WAV</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <h2>Perguntas <span class="gradient-text">Frequentes</span></h2>
+                <p>Tudo que você precisa saber</p>
+            </div>
+            
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Como funciona a tecnologia de IA?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Nossa IA analisa automaticamente o vídeo e detecta todas as qualidades disponíveis, otimiza a velocidade de download e garante a melhor experiência possível.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>É realmente grátis?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sim! 100% gratuito, sem limites de downloads, sem registro necessário.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Qual a qualidade máxima?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Suportamos até 8K (7680x4320) quando disponível no vídeo original.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Funciona em celular?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sim! Nosso sistema é totalmente responsivo e funciona perfeitamente em todos os dispositivos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Video<strong>Max</strong></span>
+                </div>
+                <p class="footer-text">
+                    Download de vídeos com tecnologia de IA avançada
+                </p>
+                <div class="footer-links">
+                    <a href="#privacy">Privacidade</a>
+                    <a href="#terms">Termos</a>
+                    <a href="#contact">Contato</a>
+                </div>
+                <p class="copyright">
+                    © 2026 VideoMax. Todos os direitos reservados.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="modal-container center-popup-cont" style="display: none;">
+        <div class="shade"></div>
+        <div class="popup-content">
+            <div class="modal-text-cont-for-js"></div>
+            <div class="close-modal close-modal-icon">×</div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
