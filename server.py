@@ -75,7 +75,7 @@ def get_video_info():
             'no_check_certificate': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['tv_embedded', 'mediaconnect'],
+                    'player_client': ['mweb'],
                 }
             },
             'socket_timeout': 30,
@@ -220,7 +220,7 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'no_check_certificate': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['tv_embedded', 'mediaconnect'],
+                    'player_client': ['mweb'],
                 }
             },
         }
@@ -250,7 +250,7 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'socket_timeout': 180,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['tv_embedded', 'mediaconnect'],
+                    'player_client': ['mweb'],
                 }
             },
             'keepvideo': False,
