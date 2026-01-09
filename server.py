@@ -18,8 +18,13 @@ import requests
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
-# API do Cobalt para fallback
-COBALT_API_URL = "https://api.cobalt.tools/api/json"
+# Lista de instâncias públicas do Cobalt para fallback
+COBALT_INSTANCES = [
+    "https://cobalt-api.kwiatekmiki.com",
+    "https://cobalt.canine.tools", 
+    "https://cobalt-api.ayo.tf",
+    "https://co.eepy.today",
+]
 
 # Encontrar FFmpeg automaticamente
 def find_ffmpeg():
@@ -67,26 +72,36 @@ def clean_old_files():
 
 def get_video_info_cobalt(url):
     """Obtém informações do vídeo usando a API do Cobalt"""
-    try:
-        headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        }
-        payload = {
-            'url': url,
-            'vCodec': 'h264',
-            'vQuality': 'max',
-            'aFormat': 'mp3',
-            'isNoTTWatermark': True,
-        }
-        
-        response = requests.post(COBALT_API_URL, json=payload, headers=headers, timeout=30)
-        if response.status_code == 200:
-            return response.json()
-        return None
-    except Exception as e:
-        print(f"Erro Cobalt: {e}")
-        return None
+    for instance in COBALT_INSTANCES:
+        try:
+            headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+            payload = {
+                'url': url,
+                'videoQuality': '1080',
+                'audioFormat': 'mp3',
+                'youtubeVideoCodec': 'h264',
+            }
+            
+            api_url = f"{instance}/"
+            print(f"Tentando Cobalt: {instance}")
+            response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+            print(f"Cobalt response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"Cobalt response: {data}")
+                if data.get('status') in ['tunnel', 'redirect', 'stream']:
+                    return data
+            elif response.status_code == 401:
+                print(f"Cobalt {instance} requer autenticação, tentando próximo...")
+                continue
+        except Exception as e:
+            print(f"Erro Cobalt {instance}: {e}")
+            continue
+    return None
 
 def get_video_info_ytdlp(url):
     """Obtém informações do vídeo usando yt-dlp"""
@@ -125,7 +140,7 @@ def get_video_info():
             print(f"yt-dlp falhou: {e}")
             # Fallback para Cobalt
             cobalt_result = get_video_info_cobalt(url)
-            if cobalt_result and cobalt_result.get('status') == 'stream':
+            if cobalt_result and cobalt_result.get('status') in ['tunnel', 'redirect', 'stream']:
                 use_cobalt = True
                 # Retornar resultado simplificado do Cobalt
                 return jsonify({
