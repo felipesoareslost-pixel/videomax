@@ -140,24 +140,70 @@ class VideoDownloader {
                 body: JSON.stringify({ url })
             });
             
-            if (!response.ok) {
-                throw new Error('Erro ao obter informações do vídeo');
-            }
-            
             const data = await response.json();
             
-            if (!data.success) {
-                throw new Error(data.error || 'Erro desconhecido');
+            if (!response.ok || !data.success) {
+                // Tentar fallback com Cobalt
+                console.log('yt-dlp falhou, tentando Cobalt...');
+                return await this.getVideoInfoCobalt(url);
             }
             
             return data;
         } catch (error) {
-            // Se o backend não estiver rodando, mostrar instruções
-            if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
-                this.showBackendError();
-                throw new Error('Backend não está rodando');
+            // Tentar fallback com Cobalt
+            console.log('Erro no backend, tentando Cobalt...', error);
+            try {
+                return await this.getVideoInfoCobalt(url);
+            } catch (cobaltError) {
+                // Se o backend não estiver rodando, mostrar instruções
+                if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+                    this.showBackendError();
+                    throw new Error('Backend não está rodando');
+                }
+                throw error;
             }
-            throw error;
+        }
+    }
+
+    async getVideoInfoCobalt(url) {
+        // Fallback: usar endpoint Cobalt do backend
+        try {
+            const response = await fetch('/api/cobalt-download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url, type: 'video' })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.download_url) {
+                // Extrair título do URL ou usar genérico
+                const videoId = this.extractVideoId(url);
+                return {
+                    success: true,
+                    id: 'cobalt',
+                    title: data.filename || `Video ${videoId}`,
+                    thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                    duration: 'N/A',
+                    views: 'N/A',
+                    channel: 'YouTube',
+                    use_cobalt: true,
+                    cobalt_url: data.download_url,
+                    formats: {
+                        video: [
+                            {format_id: 'cobalt_best', quality: 'Melhor Qualidade', resolution: 'Auto', size: 'N/A', fps: 30, format: 'MP4', format_name: 'MP4 (Auto)', codec: 'h264'}
+                        ],
+                        audio: [
+                            {format_id: 'cobalt_audio', quality: '320kbps', size: 'N/A', format: 'MP3'}
+                        ]
+                    }
+                };
+            }
+            throw new Error('Cobalt não retornou URL válida');
+        } catch (error) {
+            throw new Error('Não foi possível processar o vídeo');
         }
     }
 
@@ -302,7 +348,9 @@ class VideoDownloader {
                     format_id: format.format_id,
                     type: type,
                     output_format: format.format ? format.format.toLowerCase() : 'mp4',
-                    codec: format.codec || 'h264'
+                    codec: format.codec || 'h264',
+                    use_cobalt: this.currentVideo.use_cobalt || false,
+                    cobalt_url: this.currentVideo.cobalt_url || ''
                 })
             });
             
@@ -314,6 +362,13 @@ class VideoDownloader {
             
             if (!data.success) {
                 throw new Error(data.error || 'Erro ao iniciar download');
+            }
+            
+            // Se for download direto via Cobalt, abrir URL
+            if (data.direct_url) {
+                this.showToast(`✅ Abrindo download...`, 'success');
+                window.open(data.direct_url, '_blank');
+                return;
             }
             
             // Monitorar progresso
