@@ -73,17 +73,10 @@ def get_video_info():
             'no_warnings': True,
             'extract_flat': False,
             'no_check_certificate': True,
-            # Usar clientes Android/iOS para evitar bloqueio de bot
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android', 'ios', 'web'],
-                    'player_skip': ['webpage', 'configs'],
+                    'player_client': ['tv_embedded', 'mediaconnect'],
                 }
-            },
-            'http_headers': {
-                'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
-                'Accept': '*/*',
-                'Accept-Language': 'en-US,en;q=0.5',
             },
             'socket_timeout': 30,
         }
@@ -227,12 +220,8 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'no_check_certificate': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android', 'ios', 'web'],
-                    'player_skip': ['webpage', 'configs'],
+                    'player_client': ['tv_embedded', 'mediaconnect'],
                 }
-            },
-            'http_headers': {
-                'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
             },
         }
         
@@ -259,13 +248,9 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'extractor_retries': 30,
             'file_access_retries': 30,
             'socket_timeout': 180,
-            'http_headers': {
-                'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
-            },
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android', 'ios', 'web'],
-                    'player_skip': ['webpage', 'configs'],
+                    'player_client': ['tv_embedded', 'mediaconnect'],
                 }
             },
             'keepvideo': False,
