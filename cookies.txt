@@ -1,0 +1,5 @@
+# Netscape HTTP Cookie File
+# Este arquivo será substituído pelos seus cookies reais
+# Exporte os cookies do YouTube usando a extensão "Get cookies.txt LOCALLY"
+# e substitua o conteúdo deste arquivo
+

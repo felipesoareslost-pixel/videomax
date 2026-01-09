@@ -37,6 +37,9 @@ def find_ffmpeg():
 
 FFMPEG_LOCATION = find_ffmpeg()
 
+# Caminho para o arquivo de cookies do YouTube
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+
 # Configurações
 DOWNLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'downloads')
 if not os.path.exists(DOWNLOAD_FOLDER):
@@ -73,13 +76,12 @@ def get_video_info():
             'no_warnings': True,
             'extract_flat': False,
             'no_check_certificate': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['mweb'],
-                }
-            },
             'socket_timeout': 30,
         }
+        
+        # Usar cookies se o arquivo existir
+        if os.path.exists(COOKIES_FILE) and os.path.getsize(COOKIES_FILE) > 100:
+            ydl_opts['cookiefile'] = COOKIES_FILE
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -218,12 +220,11 @@ def process_download(download_id, url, format_id, download_type, output_format='
         base_opts = {
             'quiet': True,
             'no_check_certificate': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['mweb'],
-                }
-            },
         }
+        
+        # Usar cookies se o arquivo existir
+        if os.path.exists(COOKIES_FILE) and os.path.getsize(COOKIES_FILE) > 100:
+            base_opts['cookiefile'] = COOKIES_FILE
         
         # Primeiro, obter informações do vídeo para pegar o título
         with yt_dlp.YoutubeDL(base_opts) as ydl_info:
@@ -248,11 +249,6 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'extractor_retries': 30,
             'file_access_retries': 30,
             'socket_timeout': 180,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['mweb'],
-                }
-            },
             'keepvideo': False,
             'noplaylist': True,
             'no_warnings': True,
@@ -263,6 +259,10 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'noprogress': False,
             'overwrites': True,
         }
+        
+        # Usar cookies se o arquivo existir
+        if os.path.exists(COOKIES_FILE) and os.path.getsize(COOKIES_FILE) > 100:
+            ydl_opts['cookiefile'] = COOKIES_FILE
         
         # Adicionar localização do FFmpeg se disponível
         if FFMPEG_LOCATION:
