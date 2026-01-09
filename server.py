@@ -26,6 +26,13 @@ COBALT_INSTANCES = [
     "https://co.eepy.today",
 ]
 
+# Lista de instâncias Piped (alternativa ao YouTube)
+PIPED_INSTANCES = [
+    "https://pipedapi.kavin.rocks",
+    "https://pipedapi.r4fo.com",
+    "https://api.piped.yt",
+]
+
 # Encontrar FFmpeg automaticamente
 def find_ffmpeg():
     """Encontra o executável do FFmpeg no sistema"""
@@ -103,6 +110,41 @@ def get_video_info_cobalt(url):
             continue
     return None
 
+def extract_video_id(url):
+    """Extrai o ID do vídeo do YouTube da URL"""
+    import re
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+def get_video_info_piped(url):
+    """Obtém informações do vídeo usando a API do Piped"""
+    video_id = extract_video_id(url)
+    if not video_id:
+        return None
+    
+    for instance in PIPED_INSTANCES:
+        try:
+            api_url = f"{instance}/streams/{video_id}"
+            print(f"Tentando Piped: {instance}")
+            response = requests.get(api_url, timeout=15)
+            print(f"Piped response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('title'):
+                    return data
+        except Exception as e:
+            print(f"Erro Piped {instance}: {e}")
+            continue
+    return None
+
 def get_video_info_ytdlp(url):
     """Obtém informações do vídeo usando yt-dlp"""
     ydl_opts = {
@@ -111,6 +153,16 @@ def get_video_info_ytdlp(url):
         'extract_flat': False,
         'no_check_certificate': True,
         'socket_timeout': 30,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'web'],
+                'player_skip': ['webpage', 'configs'],
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
     }
     
     # Usar cookies se o arquivo existir
@@ -138,7 +190,71 @@ def get_video_info():
             info = get_video_info_ytdlp(url)
         except Exception as e:
             print(f"yt-dlp falhou: {e}")
-            # Fallback para Cobalt
+            info = None
+        
+        # Se yt-dlp falhou, tentar Piped
+        if info is None:
+            print("Tentando fallback Piped...")
+            piped_result = get_video_info_piped(url)
+            if piped_result:
+                # Processar resultado do Piped
+                video_streams = piped_result.get('videoStreams', [])
+                audio_streams = piped_result.get('audioStreams', [])
+                
+                video_formats = []
+                audio_formats = []
+                
+                # Pegar streams de vídeo com áudio ou apenas vídeo
+                for stream in video_streams:
+                    if stream.get('videoOnly', False):
+                        continue
+                    quality = stream.get('quality', 'N/A')
+                    video_formats.append({
+                        'format_id': 'piped',
+                        'quality': quality,
+                        'resolution': quality,
+                        'size': 'N/A',
+                        'fps': stream.get('fps', 30),
+                        'format': 'MP4',
+                        'format_name': f'MP4 ({quality})',
+                        'codec': 'h264',
+                        'piped_url': stream.get('url', '')
+                    })
+                
+                # Pegar streams de áudio
+                for stream in audio_streams:
+                    bitrate = stream.get('bitrate', 0)
+                    if bitrate:
+                        audio_formats.append({
+                            'format_id': 'piped_audio',
+                            'quality': f'{bitrate // 1000}kbps',
+                            'size': 'N/A',
+                            'format': 'MP3',
+                            'piped_url': stream.get('url', '')
+                        })
+                
+                # Limitar e ordenar
+                video_formats = video_formats[:6]
+                audio_formats = sorted(audio_formats, key=lambda x: int(x['quality'].replace('kbps', '')), reverse=True)[:4]
+                
+                return jsonify({
+                    'success': True,
+                    'id': extract_video_id(url) or 'piped',
+                    'title': piped_result.get('title', 'Video'),
+                    'thumbnail': piped_result.get('thumbnailUrl', ''),
+                    'duration': str(piped_result.get('duration', 0) // 60) + ':' + str(piped_result.get('duration', 0) % 60).zfill(2),
+                    'views': format_views(piped_result.get('views', 0)),
+                    'channel': piped_result.get('uploader', 'YouTube'),
+                    'use_piped': True,
+                    'formats': {
+                        'video': video_formats if video_formats else [{'format_id': 'piped', 'quality': 'Melhor', 'resolution': 'Auto', 'size': 'N/A', 'fps': 30, 'format': 'MP4', 'format_name': 'MP4', 'codec': 'h264'}],
+                        'audio': audio_formats if audio_formats else [{'format_id': 'piped_audio', 'quality': '128kbps', 'size': 'N/A', 'format': 'MP3'}]
+                    }
+                })
+        
+        # Se Piped também falhou, tentar Cobalt
+        if info is None:
+            print("Tentando fallback Cobalt...")
             cobalt_result = get_video_info_cobalt(url)
             if cobalt_result and cobalt_result.get('status') in ['tunnel', 'redirect', 'stream']:
                 use_cobalt = True
@@ -159,7 +275,7 @@ def get_video_info():
                     }
                 })
             else:
-                return jsonify({'error': 'Não foi possível obter informações do vídeo'}), 400
+                return jsonify({'error': 'Não foi possível obter informações do vídeo. Tente novamente mais tarde.'}), 400
         
         if info is None:
             return jsonify({'error': 'Não foi possível obter informações do vídeo'}), 400
@@ -302,29 +418,46 @@ def cobalt_download():
         
         payload = {
             'url': url,
-            'vCodec': 'h264',
-            'vQuality': 'max',
-            'aFormat': 'mp3',
-            'isNoTTWatermark': True,
-            'isAudioOnly': download_type == 'audio',
+            'videoQuality': '1080',
+            'audioFormat': 'mp3',
+            'youtubeVideoCodec': 'h264',
+            'downloadMode': 'audio' if download_type == 'audio' else 'auto',
         }
         
-        response = requests.post(COBALT_API_URL, json=payload, headers=headers, timeout=30)
+        # Tentar múltiplas instâncias
+        for instance in COBALT_INSTANCES:
+            try:
+                api_url = f"{instance}/"
+                response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('status') in ['tunnel', 'redirect', 'stream']:
+                        return jsonify({
+                            'success': True,
+                            'download_url': result.get('url', ''),
+                            'filename': result.get('filename', 'video.mp4')
+                        })
+                    elif result.get('status') == 'picker':
+                        # Múltiplas opções disponíveis
+                        return jsonify({
+                            'success': True,
+                            'download_url': result.get('picker', [{}])[0].get('url', ''),
+                            'filename': 'video.mp4'
+                        })
+            except Exception as e:
+                print(f"Cobalt {instance} falhou: {e}")
+                continue
         
-        if response.status_code == 200:
-            result = response.json()
-            if result.get('status') == 'stream':
+        # Se Cobalt falhou, tentar Piped
+        piped_result = get_video_info_piped(url)
+        if piped_result:
+            streams = piped_result.get('audioStreams' if download_type == 'audio' else 'videoStreams', [])
+            if streams:
                 return jsonify({
                     'success': True,
-                    'download_url': result.get('url', ''),
-                    'filename': result.get('filename', 'video.mp4')
-                })
-            elif result.get('status') == 'picker':
-                # Múltiplas opções disponíveis
-                return jsonify({
-                    'success': True,
-                    'download_url': result.get('picker', [{}])[0].get('url', ''),
-                    'filename': 'video.mp4'
+                    'download_url': streams[0].get('url', ''),
+                    'filename': f"{piped_result.get('title', 'video')}.{'mp3' if download_type == 'audio' else 'mp4'}"
                 })
         
         return jsonify({'error': 'Falha ao obter link de download'}), 400
