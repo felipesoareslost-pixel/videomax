@@ -1,9 +1,7 @@
 services:
   - type: web
     name: videomax
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn server:app
+    runtime: docker
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
