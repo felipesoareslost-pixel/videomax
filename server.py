@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 VideoMax Backend - Sistema de Download de Vídeos
+Versão: 2.0.0 - Com fallback Piped e Cobalt
 """
 
 from flask import Flask, request, jsonify, send_file, send_from_directory
@@ -17,6 +18,10 @@ import requests
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
+
+print("=" * 50)
+print("VideoMax Backend v2.0.0 - Piped + Cobalt Fallback")
+print("=" * 50)
 
 # Lista de instâncias públicas do Cobalt para fallback
 COBALT_INSTANCES = [
