@@ -157,73 +157,73 @@ def get_video_info():
         qualities = {}
         
         for fmt in info.get('formats', []):
-                if fmt.get('vcodec') != 'none' and fmt.get('acodec') != 'none':
-                    # Formato com vídeo e áudio
-                    height = fmt.get('height', 0)
-                    if height and height not in qualities:
-                        quality = f"{height}p"
-                        qualities[height] = {
-                            'format_id': fmt['format_id'],
-                            'quality': quality,
-                            'resolution': f"{fmt.get('width', 0)}x{height}",
-                            'size': fmt.get('filesize_approx', 0) or fmt.get('filesize', 0) or 0,
-                            'fps': fmt.get('fps', 30),
-                        }
-            
-            # Criar opções para cada qualidade em múltiplos formatos
-            output_formats = [
-                {'ext': 'MP4', 'codec': 'h264', 'name': 'MP4 (H.264)'},
-                {'ext': 'AVI', 'codec': 'xvid', 'name': 'AVI (Xvid)'},
-                {'ext': 'MKV', 'codec': 'h264', 'name': 'MKV (H.264)'},
-                {'ext': 'MOV', 'codec': 'h264', 'name': 'MOV (H.264)'},
-                {'ext': 'WMV', 'codec': 'wmv2', 'name': 'WMV'},
-                {'ext': 'FLV', 'codec': 'flv', 'name': 'FLV'},
-            ]
-            
-            for height in sorted(qualities.keys(), reverse=True):
-                fmt = qualities[height]
-                for output_fmt in output_formats:
-                    video_formats.append({
+            if fmt.get('vcodec') != 'none' and fmt.get('acodec') != 'none':
+                # Formato com vídeo e áudio
+                height = fmt.get('height', 0)
+                if height and height not in qualities:
+                    quality = f"{height}p"
+                    qualities[height] = {
                         'format_id': fmt['format_id'],
-                        'quality': fmt['quality'],
-                        'resolution': fmt['resolution'],
-                        'size': format_size(fmt['size']) if fmt['size'] else 'N/A',
-                        'fps': fmt['fps'],
-                        'format': output_fmt['ext'],
-                        'format_name': output_fmt['name'],
-                        'codec': output_fmt['codec']
+                        'quality': quality,
+                        'resolution': f"{fmt.get('width', 0)}x{height}",
+                        'size': fmt.get('filesize_approx', 0) or fmt.get('filesize', 0) or 0,
+                        'fps': fmt.get('fps', 30),
+                    }
+        
+        # Criar opções para cada qualidade em múltiplos formatos
+        output_formats = [
+            {'ext': 'MP4', 'codec': 'h264', 'name': 'MP4 (H.264)'},
+            {'ext': 'AVI', 'codec': 'xvid', 'name': 'AVI (Xvid)'},
+            {'ext': 'MKV', 'codec': 'h264', 'name': 'MKV (H.264)'},
+            {'ext': 'MOV', 'codec': 'h264', 'name': 'MOV (H.264)'},
+            {'ext': 'WMV', 'codec': 'wmv2', 'name': 'WMV'},
+            {'ext': 'FLV', 'codec': 'flv', 'name': 'FLV'},
+        ]
+        
+        for height in sorted(qualities.keys(), reverse=True):
+            fmt = qualities[height]
+            for output_fmt in output_formats:
+                video_formats.append({
+                    'format_id': fmt['format_id'],
+                    'quality': fmt['quality'],
+                    'resolution': fmt['resolution'],
+                    'size': format_size(fmt['size']) if fmt['size'] else 'N/A',
+                    'fps': fmt['fps'],
+                    'format': output_fmt['ext'],
+                    'format_name': output_fmt['name'],
+                    'codec': output_fmt['codec']
+                })
+        
+        # Formatos de áudio
+        for fmt in info.get('formats', []):
+            if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
+                bitrate = fmt.get('abr', 0)
+                if bitrate and bitrate >= 128:
+                    audio_formats.append({
+                        'format_id': fmt['format_id'],
+                        'quality': f"{int(bitrate)}kbps",
+                        'size': format_size(fmt.get('filesize_approx', 0) or fmt.get('filesize', 0) or 0),
+                        'format': 'MP3'
                     })
-            
-            # Formatos de áudio
-            for fmt in info.get('formats', []):
-                if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
-                    bitrate = fmt.get('abr', 0)
-                    if bitrate and bitrate >= 128:
-                        audio_formats.append({
-                            'format_id': fmt['format_id'],
-                            'quality': f"{int(bitrate)}kbps",
-                            'size': format_size(fmt.get('filesize_approx', 0) or fmt.get('filesize', 0) or 0),
-                            'format': 'MP3'
-                        })
-            
-            # Remover duplicatas de áudio e limitar
-            seen = set()
-            audio_formats = [x for x in audio_formats if not (x['quality'] in seen or seen.add(x['quality']))]
-            audio_formats = sorted(audio_formats, key=lambda x: int(x['quality'].replace('kbps', '')), reverse=True)[:4]
-            
-            return jsonify({
-                'success': True,
-                'id': info.get('id', ''),
-                'title': info.get('title', 'Sem título'),
-                'thumbnail': info.get('thumbnail', ''),
-                'duration': str(int(info.get('duration', 0) // 60)) + ':' + str(int(info.get('duration', 0) % 60)).zfill(2),
-                'views': format_views(info.get('view_count', 0)),
-                'channel': info.get('uploader', 'Desconhecido'),
-                'formats': {
-                    'video': video_formats,
-                    'audio': audio_formats
-                }
-            })
+        
+        # Remover duplicatas de áudio e limitar
+        seen = set()
+        audio_formats = [x for x in audio_formats if not (x['quality'] in seen or seen.add(x['quality']))]
+        audio_formats = sorted(audio_formats, key=lambda x: int(x['quality'].replace('kbps', '')), reverse=True)[:4]
+        
+        return jsonify({
+            'success': True,
+            'id': info.get('id', ''),
+            'title': info.get('title', 'Sem título'),
+            'thumbnail': info.get('thumbnail', ''),
+            'duration': str(int(info.get('duration', 0) // 60)) + ':' + str(int(info.get('duration', 0) % 60)).zfill(2),
+            'views': format_views(info.get('view_count', 0)),
+            'channel': info.get('uploader', 'Desconhecido'),
+            'formats': {
+                'video': video_formats,
+                'audio': audio_formats
+            }
+        })
     
     except Exception as e:
         return jsonify({'error': str(e)}), 400
