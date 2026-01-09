@@ -73,12 +73,19 @@ def get_video_info():
             'no_warnings': True,
             'extract_flat': False,
             'no_check_certificate': True,
-            'extractor_args': {'youtube': {'player_client': ['web']}},
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-us,en;q=0.5',
+            # Usar clientes Android/iOS para evitar bloqueio de bot
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'web'],
+                    'player_skip': ['webpage', 'configs'],
+                }
             },
+            'http_headers': {
+                'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+                'Accept': '*/*',
+                'Accept-Language': 'en-US,en;q=0.5',
+            },
+            'socket_timeout': 30,
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -214,8 +221,23 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'filename': None
         }
         
+        # Opções base para evitar bloqueio do YouTube
+        base_opts = {
+            'quiet': True,
+            'no_check_certificate': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'web'],
+                    'player_skip': ['webpage', 'configs'],
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+            },
+        }
+        
         # Primeiro, obter informações do vídeo para pegar o título
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl_info:
+        with yt_dlp.YoutubeDL(base_opts) as ydl_info:
             info = ydl_info.extract_info(url, download=False)
             video_title = info.get('title', 'video')
             clean_title = clean_filename(video_title)
@@ -229,16 +251,22 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'outtmpl': output_path,
             'progress_hooks': [lambda d: update_progress(download_id, d)],
             # OTIMIZAÇÕES DE VELOCIDADE BALANCEADAS
-            'concurrent_fragment_downloads': 8,  # Reduzido para estabilidade
-            'http_chunk_size': 5242880,  # 5MB chunks (mais estável)
-            'buffersize': 32768,  # 32KB buffer
-            'retries': 50,  # Mais tentativas
+            'concurrent_fragment_downloads': 8,
+            'http_chunk_size': 5242880,
+            'buffersize': 32768,
+            'retries': 50,
             'fragment_retries': 50,
             'extractor_retries': 30,
             'file_access_retries': 30,
-            'socket_timeout': 180,  # Timeout maior
+            'socket_timeout': 180,
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+            },
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'ios', 'web'],
+                    'player_skip': ['webpage', 'configs'],
+                }
             },
             'keepvideo': False,
             'noplaylist': True,
@@ -246,9 +274,9 @@ def process_download(download_id, url, format_id, download_type, output_format='
             'quiet': False,
             'no_check_certificate': True,
             'prefer_ffmpeg': True,
-            'continuedl': True,  # Continuar downloads parciais
+            'continuedl': True,
             'noprogress': False,
-            'overwrites': True,  # Sobrescrever arquivos incompletos
+            'overwrites': True,
         }
         
         # Adicionar localização do FFmpeg se disponível
